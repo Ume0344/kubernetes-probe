@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: liveness
+  name: liveness-http-slow
+spec:
+  containers:
+  - name: liveness-slow
+    image: registry.k8s.io/e2e-test-images/agnhost:2.40
+    args:
+    - liveness
+    ports:
+    - name: liveness-port
+      containerPort: 8080
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+        httpHeaders:
+        - name: Custom-Header
+          value: Awesome
+      initialDelaySeconds: 3
+      periodSeconds: 3
+    # here, we are using same endpoint as of liveness probe.
+    # startup probe will check this endpoint every 10 seconds 30 times.
+    # which gives application 300s to finish it startup and be ready
+    # to accept traffic.
+    startupProbe: 
+      httpGet:
+        path: /healthz
+        port: liveness-port
+      failureThreshold: 30
+      periodSeconds: 10
